@@ -16,7 +16,8 @@ const Index = () => {
   const handleFileSelect = async (file: File) => {
     try {
       const buffer = await file.arrayBuffer();
-      const workbook = XLSX.read(buffer, { type: 'arraybuffer' });
+      // Fix: Change "arraybuffer" to "array" which is a supported type
+      const workbook = XLSX.read(buffer, { type: 'array' });
       
       // Process each sheet according to mapping
       const processedData: any[] = [];
