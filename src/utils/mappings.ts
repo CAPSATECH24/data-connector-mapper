@@ -52,8 +52,8 @@ export const defaultMappings: SheetMappings = {
     'ICCID': null,
     'Fecha_de_Activacion': null,
     'Fecha_de_Desactivacion': null,
-    'Hora_de_Ultimo_Mensaje': null,
-    'Ultimo_Reporte': 'Último reporte',
+    'Hora_de_Ultimo_Mensaje': 'Último reporte', // Changed from null to 'Último reporte'
+    'Ultimo_Reporte': null, // Changed from 'Último reporte' to null
     'Vehiculo': 'Vehículo',
     'Servicios': 'Servicios',
     'Grupo': 'Grupos',
