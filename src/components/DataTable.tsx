@@ -10,6 +10,8 @@ import {
 } from './ui/table';
 import { Card } from './ui/card';
 import { Input } from './ui/input';
+import { Download } from 'lucide-react';
+import { Button } from './ui/button';
 
 interface DataTableProps {
   data: any[];
@@ -17,7 +19,7 @@ interface DataTableProps {
   onExport?: () => void;
 }
 
-export const DataTable: React.FC<DataTableProps> = ({ data, columns }) => {
+export const DataTable: React.FC<DataTableProps> = ({ data, columns, onExport }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredData, setFilteredData] = useState(data);
 
@@ -38,30 +40,6 @@ export const DataTable: React.FC<DataTableProps> = ({ data, columns }) => {
     setFilteredData(result);
   }, [data, searchTerm]);
 
-  // Determine if a value is a date (for formatting)
-  const isDateValue = (columnName: string): boolean => {
-    return columnName.toLowerCase().includes('fecha') || 
-           columnName.toLowerCase().includes('hora') || 
-           columnName.toLowerCase().includes('reporte');
-  };
-
-  // Format date value for display
-  const formatDateValue = (value: any): string => {
-    if (value === null || value === undefined) return "";
-    
-    // Try to parse as date
-    try {
-      const date = new Date(value);
-      if (!isNaN(date.getTime())) {
-        return date.toLocaleDateString();
-      }
-    } catch (e) {
-      // Not a valid date, continue with normal formatting
-    }
-    
-    return String(value);
-  };
-
   return (
     <Card className="glass-panel p-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
@@ -71,6 +49,13 @@ export const DataTable: React.FC<DataTableProps> = ({ data, columns }) => {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full md:w-64"
         />
+        
+        {onExport && (
+          <Button onClick={onExport} variant="outline" className="whitespace-nowrap">
+            <Download className="w-4 h-4 mr-2" />
+            Exportar Excel
+          </Button>
+        )}
       </div>
       
       <div className="overflow-x-auto">
@@ -90,9 +75,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, columns }) => {
                     {columns.map((column) => (
                       <TableCell key={column}>
                         {row[column] !== null && row[column] !== undefined 
-                          ? isDateValue(column) 
-                            ? formatDateValue(row[column])
-                            : String(row[column]) 
+                          ? String(row[column]) 
                           : ""}
                       </TableCell>
                     ))}
