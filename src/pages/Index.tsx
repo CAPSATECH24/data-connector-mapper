@@ -25,10 +25,11 @@ const Index = () => {
     const initSqlJs = async () => {
       try {
         if (!window.SQL) {
-          const sqlPromise = import('sql.js');
+          // Corregimos la importación para manejar correctamente el módulo
+          const sqlModule = await import('sql.js');
           
           // Usamos CDN para garantizar acceso al archivo WASM
-          window.SQL = await sqlPromise.default({
+          window.SQL = await sqlModule.default({
             locateFile: () => SQL_WASM_PATH
           });
           
