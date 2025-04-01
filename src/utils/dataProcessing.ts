@@ -74,67 +74,90 @@ export const processMappedData = (
   sheetName: string,
   fechaArchivo: string
 ): { validData: any[], invalidData: any[] } => {
+  console.log(`processMappedData: Procesando ${sheetData.length} registros para ${sheetName}`);
+  
   const validData: any[] = [];
   const invalidData: any[] = [];
   
-  sheetData.forEach(row => {
-    // First determine if the row is valid (Cliente_Cuenta is required)
-    const requiredField = 'Cliente_Cuenta';
-    const columnName = mapping[requiredField];
-    const value = columnName ? row[columnName] : null;
-    
-    if (!value) {
-      // If the required field is missing, the row is invalid
-      invalidData.push(row);
-    } else {
-      // Build a valid record
-      const record: Record<string, any> = {};
-      
-      const fields = [
-        'Nombre', 'Cliente_Cuenta', 'Tipo_de_Dispositivo', 'IMEI', 'ICCID',
-        'Fecha_de_Activacion', 'Fecha_de_Desactivacion', 'Hora_de_Ultimo_Mensaje',
-        'Ultimo_Reporte', 'Vehiculo', 'Servicios', 'Grupo', 'Telefono', 'Origen', 'Fecha_Archivo'
-      ];
-      
-      fields.forEach(field => {
-        if (field === 'Origen') {
-          record[field] = mapping['Origen'];
-        } else if (field === 'Fecha_Archivo') {
-          record[field] = fechaArchivo;
-        } else {
-          const columnName = mapping[field];
-          if (columnName) {
-            let value = row[columnName];
-            
-            // Apply specific formatting based on field type
-            if (field === 'Telefono') {
-              value = cleanTelefono(value);
-            } else if (field === 'Fecha_de_Activacion' || field === 'Fecha_de_Desactivacion') {
-              value = convertExcelDate(value);
-            } else if (field === 'Hora_de_Ultimo_Mensaje' || field === 'Ultimo_Reporte') {
-              // Check if it could be an Excel date/time value (includes time)
-              value = convertExcelDate(value);
-            }
-            
-            record[field] = value;
-          } else {
-            record[field] = null;
-          }
-        }
-      });
-      
-      // Calculate days since last report
-      record['Dias_Desde_Ultimo_Reporte'] = calculateDaysSinceLastReport(record['Hora_de_Ultimo_Mensaje']);
-      
-      validData.push(record);
-    }
-  });
+  if (!Array.isArray(sheetData) || sheetData.length === 0) {
+    console.warn(`processMappedData: No hay datos válidos para procesar en ${sheetName}`);
+    return { validData, invalidData };
+  }
   
+  try {
+    sheetData.forEach((row, index) => {
+      // First determine if the row is valid (Cliente_Cuenta is required)
+      const requiredField = 'Cliente_Cuenta';
+      const columnName = mapping[requiredField];
+      
+      if (!columnName) {
+        console.warn(`processMappedData: No se encontró columna para el campo requerido ${requiredField} en ${sheetName}`);
+        invalidData.push(row);
+        return;
+      }
+      
+      const value = row[columnName];
+      
+      if (value === undefined || value === null || value === '') {
+        console.log(`processMappedData: Fila ${index} inválida - falta ${requiredField}`);
+        invalidData.push(row);
+      } else {
+        // Build a valid record
+        const record: Record<string, any> = {};
+        
+        const fields = [
+          'Nombre', 'Cliente_Cuenta', 'Tipo_de_Dispositivo', 'IMEI', 'ICCID',
+          'Fecha_de_Activacion', 'Fecha_de_Desactivacion', 'Hora_de_Ultimo_Mensaje',
+          'Ultimo_Reporte', 'Vehiculo', 'Servicios', 'Grupo', 'Telefono', 'Origen', 'Fecha_Archivo'
+        ];
+        
+        fields.forEach(field => {
+          if (field === 'Origen') {
+            record[field] = mapping['Origen'];
+          } else if (field === 'Fecha_Archivo') {
+            record[field] = fechaArchivo;
+          } else {
+            const columnName = mapping[field];
+            if (columnName) {
+              let value = row[columnName];
+              
+              // Apply specific formatting based on field type
+              if (field === 'Telefono') {
+                value = cleanTelefono(value);
+              } else if (field === 'Fecha_de_Activacion' || field === 'Fecha_de_Desactivacion') {
+                value = convertExcelDate(value);
+              } else if (field === 'Hora_de_Ultimo_Mensaje' || field === 'Ultimo_Reporte') {
+                // Check if it could be an Excel date/time value (includes time)
+                value = convertExcelDate(value);
+              }
+              
+              record[field] = value;
+            } else {
+              record[field] = null;
+            }
+          }
+        });
+        
+        // Calculate days since last report
+        record['Dias_Desde_Ultimo_Reporte'] = calculateDaysSinceLastReport(record['Hora_de_Ultimo_Mensaje']);
+        
+        validData.push(record);
+      }
+    });
+  } catch (error) {
+    console.error(`Error procesando datos para ${sheetName}:`, error);
+  }
+  
+  console.log(`processMappedData: Procesamiento completado para ${sheetName}. Válidos: ${validData.length}, Inválidos: ${invalidData.length}`);
   return { validData, invalidData };
 };
 
 // Export data to SQLite database file
 export const exportToSQLite = (data: any[]): Blob => {
+  if (!window.SQL) {
+    throw new Error('SQL.js no está inicializado');
+  }
+  
   const SQL = window.SQL;
   
   // Create a new database

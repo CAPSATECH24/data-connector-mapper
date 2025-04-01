@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload } from 'lucide-react';
 import { Card } from './ui/card';
@@ -9,17 +9,22 @@ interface FileUploadProps {
 }
 
 export const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect }) => {
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    console.log('Archivos recibidos:', acceptedFiles);
+    if (acceptedFiles && acceptedFiles.length > 0) {
+      const file = acceptedFiles[0];
+      console.log('Archivo seleccionado:', file.name, file.type);
+      onFileSelect(file);
+    }
+  }, [onFileSelect]);
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
       'application/vnd.ms-excel': ['.xls']
     },
     maxFiles: 1,
-    onDrop: files => {
-      if (files?.[0]) {
-        onFileSelect(files[0]);
-      }
-    }
+    onDrop
   });
 
   return (
@@ -32,12 +37,12 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect }) => {
       <Upload className="w-12 h-12 mx-auto mb-4 text-primary" />
       <div className="text-lg font-medium">
         {isDragActive ? (
-          <p className="text-primary">Drop the Excel file here</p>
+          <p className="text-primary">Suelta el archivo Excel aquí</p>
         ) : (
-          <p>Drag and drop an Excel file here, or click to select</p>
+          <p>Arrastra y suelta un archivo Excel aquí, o haz clic para seleccionar</p>
         )}
       </div>
-      <p className="text-sm text-gray-500 mt-2">Supports .xlsx and .xls files</p>
+      <p className="text-sm text-gray-500 mt-2">Soporta archivos .xlsx y .xls</p>
     </Card>
   );
 };
