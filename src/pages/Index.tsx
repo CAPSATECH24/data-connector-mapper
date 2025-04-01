@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { FileUpload } from '../components/FileUpload';
 import { DataTable } from '../components/DataTable';
@@ -67,10 +66,20 @@ const Index = () => {
   const exportData = () => {
     if (data.length === 0) return;
     
+    // Obtenemos la fecha actual en formato DD-MM-YYYY
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
+    const formattedDate = `${day}-${month}-${year}`;
+    
+    // Creamos el nombre del archivo con la fecha actual
+    const fileName = `BD PLATAFORMAS - ${formattedDate}.xlsx`;
+    
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Datos Procesados");
-    XLSX.writeFile(wb, "datos_exportados.xlsx");
+    XLSX.writeFile(wb, fileName);
   };
 
   return (
