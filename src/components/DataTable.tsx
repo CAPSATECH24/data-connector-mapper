@@ -38,6 +38,30 @@ export const DataTable: React.FC<DataTableProps> = ({ data, columns }) => {
     setFilteredData(result);
   }, [data, searchTerm]);
 
+  // Determine if a value is a date (for formatting)
+  const isDateValue = (columnName: string): boolean => {
+    return columnName.toLowerCase().includes('fecha') || 
+           columnName.toLowerCase().includes('hora') || 
+           columnName.toLowerCase().includes('reporte');
+  };
+
+  // Format date value for display
+  const formatDateValue = (value: any): string => {
+    if (value === null || value === undefined) return "";
+    
+    // Try to parse as date
+    try {
+      const date = new Date(value);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString();
+      }
+    } catch (e) {
+      // Not a valid date, continue with normal formatting
+    }
+    
+    return String(value);
+  };
+
   return (
     <Card className="glass-panel p-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
@@ -66,7 +90,9 @@ export const DataTable: React.FC<DataTableProps> = ({ data, columns }) => {
                     {columns.map((column) => (
                       <TableCell key={column}>
                         {row[column] !== null && row[column] !== undefined 
-                          ? String(row[column]) 
+                          ? isDateValue(column) 
+                            ? formatDateValue(row[column])
+                            : String(row[column]) 
                           : ""}
                       </TableCell>
                     ))}

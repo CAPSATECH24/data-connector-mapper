@@ -10,6 +10,9 @@ import { defaultMappings } from '../utils/mappings';
 import { Button } from '@/components/ui/button';
 import { Download, Database } from 'lucide-react';
 
+// Cargar SQLite WebAssembly desde CDN
+const SQL_WASM_PATH = 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.wasm';
+
 const Index = () => {
   const [data, setData] = useState<any[]>([]);
   const [invalidData, setInvalidData] = useState<any[]>([]);
@@ -23,14 +26,14 @@ const Index = () => {
       try {
         if (!window.SQL) {
           const sqlPromise = import('sql.js');
-          const dataPromise = fetch('/sql-wasm.wasm').then(res => res.arrayBuffer());
-          const [SQL, buf] = await Promise.all([sqlPromise, dataPromise]);
           
-          window.SQL = await SQL.default({
-            locateFile: () => '/sql-wasm.wasm'
+          // Usamos CDN para garantizar acceso al archivo WASM
+          window.SQL = await sqlPromise.default({
+            locateFile: () => SQL_WASM_PATH
           });
           
           setIsInitialized(true);
+          console.log('SQL.js initialized successfully');
         } else {
           setIsInitialized(true);
         }
