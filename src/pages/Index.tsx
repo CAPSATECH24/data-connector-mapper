@@ -25,11 +25,10 @@ const Index = () => {
     const initSqlJs = async () => {
       try {
         if (!window.SQL) {
-          // Corregimos la importación para manejar correctamente el módulo
-          const sqlModule = await import('sql.js');
+          const sqlPromise = import('sql.js');
           
           // Usamos CDN para garantizar acceso al archivo WASM
-          window.SQL = await sqlModule.default({
+          window.SQL = await sqlPromise.default({
             locateFile: () => SQL_WASM_PATH
           });
           
@@ -53,7 +52,6 @@ const Index = () => {
 
   const handleFileSelect = async (file: File) => {
     try {
-      console.log('Procesando archivo:', file.name);
       const buffer = await file.arrayBuffer();
       const workbook = XLSX.read(buffer, { type: 'array' });
       
@@ -64,36 +62,23 @@ const Index = () => {
       
       const filename = file.name;
       const fechaArchivo = extractDateFromFilename(filename);
-
-      console.log('Hojas disponibles:', workbook.SheetNames);
       
       workbook.SheetNames.forEach(sheetName => {
-        console.log(`Procesando hoja: ${sheetName}`);
-        
         if (defaultMappings[sheetName]) {
-          console.log(`Encontrado mapping para ${sheetName}`);
           const worksheet = workbook.Sheets[sheetName];
           const sheetData = XLSX.utils.sheet_to_json(worksheet);
-          console.log(`Datos en ${sheetName}:`, sheetData.length);
           recordCount += sheetData.length;
           
-          if (sheetData.length > 0) {
-            // Process the data with mappings
-            const { validData, invalidData } = processMappedData(
-              sheetData, 
-              defaultMappings[sheetName], 
-              sheetName, 
-              fechaArchivo
-            );
-            
-            console.log(`Datos válidos en ${sheetName}:`, validData.length);
-            console.log(`Datos inválidos en ${sheetName}:`, invalidData.length);
-            
-            processedData.push(...validData);
-            invalidRecords.push(...invalidData);
-          }
-        } else {
-          console.log(`No se encontró mapping para la hoja: ${sheetName}`);
+          // Process the data with mappings
+          const { validData, invalidData } = processMappedData(
+            sheetData, 
+            defaultMappings[sheetName], 
+            sheetName, 
+            fechaArchivo
+          );
+          
+          processedData.push(...validData);
+          invalidRecords.push(...invalidData);
         }
       });
 
@@ -105,8 +90,6 @@ const Index = () => {
         title: "Archivo procesado exitosamente",
         description: `Procesados ${processedData.length} registros de ${recordCount} totales`,
       });
-      
-      console.log('Procesamiento completado. Datos totales:', processedData.length);
     } catch (error) {
       console.error("Error processing file:", error);
       toast({
