@@ -32,6 +32,30 @@ export const convertExcelDate = (serialDate: any): string | null => {
   return String(serialDate);
 };
 
+// Calculate days since last report
+export const calculateDaysSinceLastReport = (lastReportDate: string | null): number | null => {
+  if (!lastReportDate) return null;
+  
+  try {
+    const lastReport = new Date(lastReportDate);
+    const today = new Date();
+    
+    // Check if the date is valid
+    if (isNaN(lastReport.getTime())) return null;
+    
+    // Calculate difference in milliseconds
+    const diffTime = today.getTime() - lastReport.getTime();
+    
+    // Convert to days and round to nearest integer
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays;
+  } catch (error) {
+    console.error("Error calculating days since last report:", error);
+    return null;
+  }
+};
+
 // Extract date from filename
 export const extractDateFromFilename = (filename: string): string => {
   const match = filename.match(/\d{4}-\d{2}-\d{2}/);
@@ -99,9 +123,42 @@ export const processMappedData = (
         }
       });
       
+      // Calculate days since last report
+      record['Dias_Desde_Ultimo_Reporte'] = calculateDaysSinceLastReport(record['Hora_de_Ultimo_Mensaje']);
+      
       validData.push(record);
     }
   });
   
   return { validData, invalidData };
+};
+
+// Export data to SQLite database file
+export const exportToSQLite = (data: any[]): Blob => {
+  const SQL = window.SQL;
+  
+  // Create a new database
+  const db = new SQL.Database();
+  
+  // Create table structure based on first row
+  if (data.length > 0) {
+    const columns = Object.keys(data[0])
+      .map(key => `"${key}" TEXT`)
+      .join(', ');
+    
+    db.run(`CREATE TABLE devices (${columns})`);
+    
+    // Insert data rows
+    data.forEach(row => {
+      const keys = Object.keys(row);
+      const placeholders = keys.map(() => '?').join(',');
+      const values = keys.map(key => (row[key] === null ? null : String(row[key])));
+      
+      db.run(`INSERT INTO devices VALUES (${placeholders})`, values);
+    });
+  }
+  
+  // Export the database to a .db file
+  const binaryArray = db.export();
+  return new Blob([binaryArray], { type: 'application/x-sqlite3' });
 };

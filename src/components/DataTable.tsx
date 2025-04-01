@@ -10,8 +10,6 @@ import {
 } from './ui/table';
 import { Card } from './ui/card';
 import { Input } from './ui/input';
-import { Download } from 'lucide-react';
-import { Button } from './ui/button';
 
 interface DataTableProps {
   data: any[];
@@ -19,7 +17,7 @@ interface DataTableProps {
   onExport?: () => void;
 }
 
-export const DataTable: React.FC<DataTableProps> = ({ data, columns, onExport }) => {
+export const DataTable: React.FC<DataTableProps> = ({ data, columns }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredData, setFilteredData] = useState(data);
 
@@ -49,13 +47,6 @@ export const DataTable: React.FC<DataTableProps> = ({ data, columns, onExport })
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full md:w-64"
         />
-        
-        {onExport && (
-          <Button onClick={onExport} variant="outline" className="whitespace-nowrap">
-            <Download className="w-4 h-4 mr-2" />
-            Exportar Excel
-          </Button>
-        )}
       </div>
       
       <div className="overflow-x-auto">

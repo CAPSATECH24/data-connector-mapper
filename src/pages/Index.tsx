@@ -1,17 +1,51 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { FileUpload } from '../components/FileUpload';
 import { DataTable } from '../components/DataTable';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
-import { processMappedData, extractDateFromFilename } from '../utils/dataProcessing';
+import { processMappedData, extractDateFromFilename, exportToSQLite } from '../utils/dataProcessing';
 import { defaultMappings } from '../utils/mappings';
+import { Button } from '@/components/ui/button';
+import { Download, Database } from 'lucide-react';
 
 const Index = () => {
   const [data, setData] = useState<any[]>([]);
   const [invalidData, setInvalidData] = useState<any[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
   const { toast } = useToast();
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Initialize SQL.js
+  useEffect(() => {
+    const initSqlJs = async () => {
+      try {
+        if (!window.SQL) {
+          const sqlPromise = import('sql.js');
+          const dataPromise = fetch('/sql-wasm.wasm').then(res => res.arrayBuffer());
+          const [SQL, buf] = await Promise.all([sqlPromise, dataPromise]);
+          
+          window.SQL = await SQL.default({
+            locateFile: () => '/sql-wasm.wasm'
+          });
+          
+          setIsInitialized(true);
+        } else {
+          setIsInitialized(true);
+        }
+      } catch (error) {
+        console.error('Failed to initialize SQL.js:', error);
+        toast({
+          title: "Error al inicializar SQL.js",
+          description: "No se podrá exportar a formato .db",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    initSqlJs();
+  }, []);
 
   const handleFileSelect = async (file: File) => {
     try {
@@ -63,7 +97,7 @@ const Index = () => {
     }
   };
 
-  const exportData = () => {
+  const exportToExcel = () => {
     if (data.length === 0) return;
     
     // Obtenemos la fecha actual en formato DD-MM-YYYY
@@ -80,6 +114,48 @@ const Index = () => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Datos Procesados");
     XLSX.writeFile(wb, fileName);
+  };
+
+  const exportToDatabase = () => {
+    if (data.length === 0 || !isInitialized) return;
+    
+    try {
+      // Get current date for filename
+      const today = new Date();
+      const day = String(today.getDate()).padStart(2, '0');
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const year = today.getFullYear();
+      const formattedDate = `${day}-${month}-${year}`;
+      
+      // Create database file
+      const blob = exportToSQLite(data);
+      
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `BD_PLATAFORMAS_${formattedDate}.db`;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+      
+      toast({
+        title: "Base de datos exportada",
+        description: "Archivo .db descargado correctamente",
+      });
+    } catch (error) {
+      console.error("Error exporting to SQLite:", error);
+      toast({
+        title: "Error al exportar",
+        description: "No se pudo generar el archivo de base de datos",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -114,14 +190,30 @@ const Index = () => {
 
           {/* All Data Table */}
           <h2 className="text-2xl font-semibold mb-4">Datos Procesados</h2>
+          <div className="flex gap-4 mb-4">
+            <Button onClick={exportToExcel} variant="outline" className="whitespace-nowrap">
+              <Download className="w-4 h-4 mr-2" />
+              Exportar Excel
+            </Button>
+            <Button 
+              onClick={exportToDatabase} 
+              variant="outline" 
+              className="whitespace-nowrap"
+              disabled={!isInitialized}
+            >
+              <Database className="w-4 h-4 mr-2" />
+              Exportar SQLite (.db)
+            </Button>
+          </div>
           <DataTable
             data={data}
             columns={[
               'Nombre', 'Cliente_Cuenta', 'Tipo_de_Dispositivo', 'IMEI', 'ICCID',
               'Fecha_de_Activacion', 'Fecha_de_Desactivacion', 'Hora_de_Ultimo_Mensaje',
-              'Ultimo_Reporte', 'Vehiculo', 'Servicios', 'Grupo', 'Telefono', 'Origen'
+              'Ultimo_Reporte', 'Vehiculo', 'Servicios', 'Grupo', 'Telefono', 'Origen',
+              'Dias_Desde_Ultimo_Reporte'
             ]}
-            onExport={exportData}
+            onExport={exportToExcel}
           />
           
           {/* Invalid Data Table */}
@@ -144,5 +236,12 @@ const Index = () => {
     </div>
   );
 };
+
+// Add SQL.js to window object type
+declare global {
+  interface Window {
+    SQL: any;
+  }
+}
 
 export default Index;
