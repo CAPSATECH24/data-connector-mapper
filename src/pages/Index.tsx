@@ -67,7 +67,41 @@ const Index = () => {
   const exportData = () => {
     if (data.length === 0) return;
     
-    const ws = XLSX.utils.json_to_sheet(data);
+    // Calculate days since last report for export
+    const today = new Date();
+    const exportData = data.map(row => {
+      const newRow = { ...row };
+      
+      // Add DiasDesdeUltimoReporte column if Hora_de_Ultimo_Mensaje exists
+      if (row.Hora_de_Ultimo_Mensaje) {
+        try {
+          // Parse date format like "01.04.2025 08:24:18"
+          const parts = row.Hora_de_Ultimo_Mensaje.split(' ');
+          if (parts.length >= 1) {
+            const dateParts = parts[0].split('.');
+            if (dateParts.length === 3) {
+              const day = parseInt(dateParts[0], 10);
+              const month = parseInt(dateParts[1], 10) - 1; // Months are 0-indexed in JS
+              const year = parseInt(dateParts[2], 10);
+              
+              const lastReportDate = new Date(year, month, day);
+              
+              // Calculate difference in days
+              const diffTime = today.getTime() - lastReportDate.getTime();
+              const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+              
+              newRow.DiasDesdeUltimoReporte = diffDays;
+            }
+          }
+        } catch (error) {
+          console.error("Error parsing date:", error);
+        }
+      }
+      
+      return newRow;
+    });
+    
+    const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Datos Procesados");
     XLSX.writeFile(wb, "datos_exportados.xlsx");
