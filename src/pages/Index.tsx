@@ -101,10 +101,19 @@ const Index = () => {
       return newRow;
     });
     
+    // Format today's date for the filename as DD-MM-YYYY
+    const formattedDate = today.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).replace(/\//g, '-');
+    
+    const exportFilename = `BD PLATAFORMAS - ${formattedDate}.xlsx`;
+    
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Datos Procesados");
-    XLSX.writeFile(wb, "datos_exportados.xlsx");
+    XLSX.writeFile(wb, exportFilename);
   };
 
   return (
