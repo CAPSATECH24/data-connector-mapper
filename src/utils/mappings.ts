@@ -1,4 +1,3 @@
-
 // Define the default mappings for different sheets
 
 export interface FieldMapping {
@@ -14,7 +13,7 @@ export const defaultMappings: SheetMappings = {
     'Nombre': 'Nombre',
     'Cliente_Cuenta': 'Cuenta',
     'Tipo_de_Dispositivo': 'Tipo de dispositivo',
-    'IMEI': 'IMEI',
+    'IMEI': 'UID',  // Changed from 'IMEI' to 'UID'
     'ICCID': 'Iccid',
     'Fecha_de_Activacion': 'Creada',
     'Fecha_de_Desactivacion': 'Desactivación',
@@ -52,8 +51,8 @@ export const defaultMappings: SheetMappings = {
     'ICCID': null,
     'Fecha_de_Activacion': null,
     'Fecha_de_Desactivacion': null,
-    'Hora_de_Ultimo_Mensaje': 'Último reporte', // Changed from null to 'Último reporte'
-    'Ultimo_Reporte': null, // Changed from 'Último reporte' to null
+    'Hora_de_Ultimo_Mensaje': 'Último reporte',
+    'Ultimo_Reporte': null,
     'Vehiculo': 'Vehículo',
     'Servicios': 'Servicios',
     'Grupo': 'Grupos',
