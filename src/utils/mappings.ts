@@ -1,3 +1,4 @@
+
 // Define the default mappings for different sheets
 
 export interface FieldMapping {
@@ -24,6 +25,23 @@ export const defaultMappings: SheetMappings = {
     'Grupo': 'Grupos',
     'Telefono': 'Teléfono',
     'Origen': 'WIALON',  // Assigned manually
+    'Fecha_Archivo': null  // Extracted from filename
+  },
+  "LEASE": {
+    'Nombre': 'Nombre',
+    'Cliente_Cuenta': 'Cuenta',
+    'Tipo_de_Dispositivo': 'Tipo de dispositivo',
+    'IMEI': 'UID',  // Same as WIALON
+    'ICCID': 'Iccid',
+    'Fecha_de_Activacion': 'Creada',
+    'Fecha_de_Desactivacion': 'Desactivación',
+    'Hora_de_Ultimo_Mensaje': 'Hora de último mensaje',
+    'Ultimo_Reporte': 'Ultimo Reporte',
+    'Vehiculo': null,
+    'Servicios': null,
+    'Grupo': 'Grupos',
+    'Telefono': 'Teléfono',
+    'Origen': 'LEASE',  // Assigned manually
     'Fecha_Archivo': null  // Extracted from filename
   },
   "ADAS": {
